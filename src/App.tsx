@@ -1,55 +1,44 @@
-import React, { useCallback } from 'react'
+import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
-import { Button, Title } from '@gnosis.pm/safe-react-components'
 import { useSafeAppsSDK } from '@safe-global/safe-apps-react-sdk'
 
 const Container = styled.div`
-  padding: 1rem;
+  background: #fff;
+  padding: 0;
   width: 100%;
-  height: 100%;
+  min-height: 100%;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  justify-content: flex-start;
+  align-items: stretch;
   flex-direction: column;
 `
 
-const Link = styled.a`
-  margin-top: 8px;
-`
-
 const SafeApp = (): React.ReactElement => {
-  const { sdk, safe } = useSafeAppsSDK()
+  const { safe } = useSafeAppsSDK()
+  const [height, setHeight] = useState(0)
 
-  const submitTx = useCallback(async () => {
-    try {
-      const { safeTxHash } = await sdk.txs.send({
-        txs: [
-          {
-            to: safe.safeAddress,
-            value: '0',
-            data: '0x',
-          },
-        ],
-      })
-      console.log({ safeTxHash })
-      const safeTx = await sdk.txs.getBySafeTxHash(safeTxHash)
-      console.log({ safeTx })
-    } catch (e) {
-      console.error(e)
+  console.log('safe', safe)
+
+  useEffect(() => {
+    function handleMessage(event: MessageEvent) {
+      if (event.data && event.data.method === 'gr_resize' && event.data.params && event.data.params.height) {
+        setHeight(event.data.params.height)
+      }
     }
-  }, [safe, sdk])
+
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
+  }, [])
 
   return (
     <Container>
-      <Title size="md">Safe: {safe.safeAddress}</Title>
-
-      <Button size="lg" color="primary" onClick={submitTx}>
-        Click to send a test transaction
-      </Button>
-
-      <Link href="https://github.com/safe-global/safe-apps-sdk" target="_blank" rel="noreferrer">
-        Documentation
-      </Link>
+      {safe.safeAddress && (
+        <iframe
+          style={{ border: 'none', width: '100%', height: height + 'px' }}
+          src={`https://embed.grindery.io/safe/slack`}
+          title="Grindery Safe Embedded Integration"
+        />
+      )}
     </Container>
   )
 }
