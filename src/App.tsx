@@ -17,8 +17,6 @@ const SafeApp = (): React.ReactElement => {
   const { safe } = useSafeAppsSDK()
   const [height, setHeight] = useState(0)
 
-  console.log('safe', safe)
-
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
       if (event.data && event.data.method === 'gr_resize' && event.data.params && event.data.params.height) {
@@ -35,7 +33,7 @@ const SafeApp = (): React.ReactElement => {
       {safe.safeAddress && (
         <iframe
           style={{ border: 'none', width: '100%', height: height + 'px' }}
-          src={`https://embed.grindery.io/safe/slack`}
+          src={`https://embed.grindery.io/safe/slack?trigger.input._grinderyContractAddress=${safe.safeAddress}&trigger.input._grinderyChain=eip155:${safe.chainId}&action=sendChannelMessage`}
           title="Grindery Safe Embedded Integration"
         />
       )}
