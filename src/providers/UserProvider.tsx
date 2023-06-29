@@ -1,24 +1,10 @@
-/*import React, { createContext, useEffect, useContext, useState } from 'react'
+import React, { createContext, useEffect, useContext, useState, useMemo, useCallback } from 'react'
 import { encode } from 'universal-base64url'
-import SafeAppsSDK from '@safe-global/safe-apps-sdk'
-
-type Opts = {
-  allowedDomains?: RegExp[]
-  debug?: boolean
-}
-
-const opts: Opts = {
-  allowedDomains: [/gnosis-safe.io$/, /app.safe.global$/],
-  debug: false,
-}
-
-const appsSdk = new SafeAppsSDK(opts)
+import * as ethers from 'ethers'
+import { useSafeAppsSDK } from '@safe-global/safe-apps-react-sdk'
+import { SafeAppProvider } from '@safe-global/safe-apps-provider'
 
 const ENGINE_URL = 'https://orchestrator.grindery.org'
-
-const settings = {
-  offChainSigning: true,
-}
 
 export type AuthToken = {
   access_token: string
@@ -28,18 +14,28 @@ export type AuthToken = {
 }
 
 // Context props
-type ContextProps = {}
+type ContextProps = {
+  token: AuthToken | null
+  message: string | null
+}
 
 // Context provider props
-type UserProviderProps = {
+export type UserProviderProps = {
   children: React.ReactNode
   address?: string
 }
 
 // Init context
-export const UserContext = createContext<ContextProps>({})
+export const UserContext = createContext<ContextProps>({
+  token: null,
+  message: null,
+})
 
 export const UserProvider = ({ children, address }: UserProviderProps) => {
+  const { sdk, safe } = useSafeAppsSDK()
+
+  const web3Provider = useMemo(() => new ethers.providers.Web3Provider(new SafeAppProvider(safe, sdk)), [sdk, safe])
+
   // Auth message
   const [message, setMessage] = useState<string | null>(null)
 
@@ -68,7 +64,7 @@ export const UserProvider = ({ children, address }: UserProviderProps) => {
       credentials: 'include',
     })
     if (resWithCreds && resWithCreds.ok) {
-      let json = await resWithCreds.json()
+      const json = await resWithCreds.json()
 
       // Set access token if exists
       if (json.access_token) {
@@ -83,20 +79,21 @@ export const UserProvider = ({ children, address }: UserProviderProps) => {
   }
 
   // Sign authentication message with MetaMask
-  const signMessage = async (msg: string) => {
-    try {
-      const currentSettings = await appsSdk.eth.setSafeSettings([settings])
-
-      const hash = await appsSdk.txs.signMessage(msg)
-      //const offChainSignature = await appsSdk.safe.getOffChainSignature(hash);
-
-      setSignature(hash.toString() || null)
-    } catch (error) {
-      console.error('signMessage error', error)
-      setSignature(null)
-      setToken(null)
-    }
-  }
+  const signMessage = useCallback(
+    async (msg: string) => {
+      if (web3Provider) {
+        try {
+          const newSignature = await web3Provider.getSigner().signMessage(msg)
+          setSignature(newSignature)
+        } catch (error) {
+          console.error('signMessage error', error)
+          setSignature(null)
+          setToken(null)
+        }
+      }
+    },
+    [web3Provider],
+  )
 
   // Get access token from the engine API
   const getToken = async (code: string) => {
@@ -112,7 +109,7 @@ export const UserProvider = ({ children, address }: UserProviderProps) => {
     })
 
     if (res.ok) {
-      let result = await res.json()
+      const result = await res.json()
       setToken(result)
     } else {
       console.error('getToken error', res.status)
@@ -139,7 +136,7 @@ export const UserProvider = ({ children, address }: UserProviderProps) => {
   }
 
   // Remove refresh_token cookie
-  const clearAuthSession = async () => {
+  /*const clearAuthSession = async () => {
     const res = await fetch(`${ENGINE_URL}/oauth/session-register`, {
       method: 'POST',
       credentials: 'include',
@@ -148,9 +145,9 @@ export const UserProvider = ({ children, address }: UserProviderProps) => {
     if (!res.ok) {
       console.error('clearAuthSession error', res.status)
     }
-  }
+  }*/
 
-  // set user if token and address is known
+  // register auth session if token and address is known
   useEffect(() => {
     if (address && token && token.access_token) {
       if (token.refresh_token) {
@@ -171,7 +168,7 @@ export const UserProvider = ({ children, address }: UserProviderProps) => {
     if (message && !signature && !token) {
       signMessage(message)
     }
-  }, [message, signature, token])
+  }, [message, signature, token, signMessage])
 
   // Get authentication token if message is signed
   useEffect(() => {
@@ -180,12 +177,18 @@ export const UserProvider = ({ children, address }: UserProviderProps) => {
     }
   }, [code, token])
 
-  return <UserContext.Provider value={{}}>{children}</UserContext.Provider>
+  return (
+    <UserContext.Provider
+      value={{
+        token,
+        message,
+      }}
+    >
+      {children}
+    </UserContext.Provider>
+  )
 }
 
 export const useUserProvider = () => useContext(UserContext)
 
 export default UserProvider
-*/
-
-export {}
