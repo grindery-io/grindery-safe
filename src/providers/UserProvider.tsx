@@ -22,7 +22,6 @@ type ContextProps = {
 // Context provider props
 export type UserProviderProps = {
   children: React.ReactNode
-  address?: string
 }
 
 // Init context
@@ -31,7 +30,7 @@ export const UserContext = createContext<ContextProps>({
   message: null,
 })
 
-export const UserProvider = ({ children, address }: UserProviderProps) => {
+export const UserProvider = ({ children }: UserProviderProps) => {
   const { sdk, safe } = useSafeAppsSDK()
 
   const web3Provider = useMemo(() => new ethers.providers.Web3Provider(new SafeAppProvider(safe, sdk)), [sdk, safe])
@@ -52,14 +51,15 @@ export const UserProvider = ({ children, address }: UserProviderProps) => {
         JSON.stringify({
           message: message,
           signature: signature,
+          type: 'eip1271',
         }),
       )) ||
     ''
 
   // Fetch authentication message or access token from the engine API
-  const startSession = async (userAddress: string) => {
+  const startSession = useCallback(async () => {
     // Try to fetch access token
-    const resWithCreds = await fetch(`${ENGINE_URL}/oauth/session?address=${userAddress}`, {
+    const resWithCreds = await fetch(`${ENGINE_URL}/oauth/session?address=${safe.safeAddress}&chain=${safe.chainId}`, {
       method: 'GET',
       credentials: 'include',
     })
@@ -76,7 +76,7 @@ export const UserProvider = ({ children, address }: UserProviderProps) => {
     } else {
       console.error('startSessionWithCreds error', (resWithCreds && resWithCreds.status) || 'Unknown error')
     }
-  }
+  }, [safe])
 
   // Sign authentication message with MetaMask
   const signMessage = useCallback(
@@ -135,33 +135,21 @@ export const UserProvider = ({ children, address }: UserProviderProps) => {
     }
   }
 
-  // Remove refresh_token cookie
-  /*const clearAuthSession = async () => {
-    const res = await fetch(`${ENGINE_URL}/oauth/session-register`, {
-      method: 'POST',
-      credentials: 'include',
-    })
-
-    if (!res.ok) {
-      console.error('clearAuthSession error', res.status)
-    }
-  }*/
-
   // register auth session if token and address is known
   useEffect(() => {
-    if (address && token && token.access_token) {
+    if (safe.safeAddress && token && token.access_token) {
       if (token.refresh_token) {
         registerAuthSession(token.refresh_token)
       }
     }
-  }, [token, address])
+  }, [token, safe])
 
   // Start session if user address is known
   useEffect(() => {
-    if (address && !message && !signature && !token) {
-      startSession(address)
+    if (!message && !signature && !token) {
+      startSession()
     }
-  }, [address, message, signature, token])
+  }, [message, signature, token, startSession])
 
   // Sign authentication message if message is known
   useEffect(() => {

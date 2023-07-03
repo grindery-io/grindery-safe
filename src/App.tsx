@@ -1,8 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
-import { useSafeAppsSDK } from '@safe-global/safe-apps-react-sdk'
 import UserProvider from './providers/UserProvider'
-import EmbedApp from './EmbedApp'
+import EmbedApp from './components/EmbedApp'
 
 const Container = styled.div`
   background: #fff;
@@ -16,11 +15,9 @@ const Container = styled.div`
 `
 
 const SafeApp = () => {
-  const { safe } = useSafeAppsSDK()
-
   return (
     <Container>
-      <UserProvider address={safe.safeAddress}>
+      <UserProvider>
         <EmbedApp />
       </UserProvider>
     </Container>
