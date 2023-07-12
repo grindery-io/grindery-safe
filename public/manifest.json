@@ -1,7 +1,7 @@
 {
-  "short_name": "Grindery Safe Integration",
-  "name": "Grindery Safe Integration",
-  "description": "Receive notifications for Safe wallet transactions via Slack, Discord, or email. Send webhooks or store data in Google Sheets.",
+  "short_name": "Slack by Grindery",
+  "name": "Slack notifications by Grindery",
+  "description": "Receive notifications on Safe wallet transactions via Slack",
   "icons": [
     {
       "src": "logo.svg",
