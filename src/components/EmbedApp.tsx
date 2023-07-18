@@ -24,8 +24,8 @@ const EmbedApp = () => {
   return safe.safeAddress && token ? (
     <iframe
       style={{ border: 'none', width: '100%', height: height + 'px' }}
-      src={`https://embed.grindery.io/safe/slack?user_chain=${safe.chainId}&user_address=${safe.safeAddress}&access_token=${token.access_token}&trigger.input._grinderyContractAddress=${safe.safeAddress}&trigger.input._grinderyChain=eip155:${safe.chainId}&trigger.skipAuth=1&action=sendChannelMessage`}
-      title="Grindery Safe Embedded Integration"
+      src={`https://embed.grindery.io/safe?user_chain=${safe.chainId}&user_address=${safe.safeAddress}&access_token=${token.access_token}&trigger.input._grinderyContractAddress=${safe.safeAddress}&trigger.input._grinderyChain=eip155:${safe.chainId}&trigger.skipAuth=1`}
+      title="Grindery Flow for Safe"
     />
   ) : (
     <div

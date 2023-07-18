@@ -1,7 +1,7 @@
 {
-  "short_name": "Slack by Grindery",
-  "name": "Slack notifications by Grindery",
-  "description": "Receive notifications on Safe wallet transactions via Slack",
+  "short_name": "Grindery Flow",
+  "name": "Grindery Flow",
+  "description": "Create workflows triggered by Safe wallet transactions",
   "icons": [
     {
       "src": "logo.svg",
